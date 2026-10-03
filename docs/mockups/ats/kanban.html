@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ATS Kanban board</title>
+  <link rel="stylesheet" href="kanban.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <strong>ATS Kanban</strong>
+    </div>
+  </header>
+  <main>
+    <div id="banner" class="banner" hidden></div>
+    <div id="board" class="board"></div>
+  </main>
+  <script>
+    const columns = ["Open", "Analyze", "Implement", "Review", "Completed", "Cancelled"];
+    const transitions = {
+      Open: ["Analyze", "Cancelled"],
+      Analyze: ["Implement", "Open", "Cancelled"],
+      Implement: ["Review", "Analyze", "Cancelled"],
+      Review: ["Completed", "Implement", "Cancelled"],
+      Completed: [],
+      Cancelled: ["Open"]
+    };
+    const syncLabel = { synced: "Synced", pending: "Pending", error: "Error", unlinked: "Not linked" };
+    let cards = [
+      { id: "#18", title: "Create the /ats/gitlab/ endpoint group skeleton", state: "Open", assignee: "Not assigned", sync: "unlinked" },
+      { id: "#19", title: "Build the GitLab client (authentication, read/update an issue)", state: "Open", assignee: "Not assigned", sync: "pending" },
+      { id: "#27", title: "Write unit tests for the client", state: "Open", assignee: "Not assigned", sync: "unlinked" },
+      { id: "#28", title: "Build server-side storage for per-team settings and the token", state: "Open", assignee: "Not assigned", sync: "unlinked" },
+      { id: "#9", title: "Kai Pelton - Set up", state: "Analyze", assignee: "Kai Pelton", sync: "pending" },
+      { id: "#13", title: "Mockup: Kanban board (columns, cards, drag interaction, invalid-move state)", state: "Implement", assignee: "Not assigned", sync: "synced" },
+      { id: "#14", title: "Mockup: Enhanced list view (search, filters, sortable columns, sync badges, quick actions)", state: "Implement", assignee: "Not assigned", sync: "synced" },
+      { id: "#17", title: "Review the existing ATS endpoint code to learn the patterns to follow", state: "Review", assignee: "Not assigned", sync: "error" },
+      { id: "#7", title: "Mina Gamble - Set up", state: "Completed", assignee: "Mina Gamble", sync: "synced" },
+      { id: "#8", title: "Ali Shaban - Set up", state: "Completed", assignee: "Ali Shaban", sync: "synced" },
+      { id: "#10", title: "Liezel Vallar - Set up", state: "Completed", assignee: "Liezel Vallar", sync: "synced" },
+      { id: "#11", title: "Raul Gonzalez - Set up", state: "Completed", assignee: "Raul Gonzalez", sync: "synced" },
+      { id: "#29", title: "Mockup: GitLab config and status panel (setup form, sync state, last sync timestamp)", state: "Completed", assignee: "Not assigned", sync: "synced" }
+    ];
+    let dragId = null;
+    const board = document.getElementById("board");
+    const banner = document.getElementById("banner");
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
+    }
+
+    function render() {
+      board.innerHTML = columns.map((state) => {
+        const items = cards.filter((card) => card.state === state);
+        const body = items.map((card) => `
+          <article class="card" draggable="true" data-id="${card.id}">
+            <div class="card-top">
+              <span class="ats-id">${card.id}</span>
+              <span class="badge badge-${card.sync}">${syncLabel[card.sync]}</span>
+            </div>
+            <h3>${escapeHtml(card.title)}</h3>
+            <p class="assignee">${escapeHtml(card.assignee)}</p>
+          </article>`).join("");
+        return `
+          <section class="column" data-state="${state}">
+            <header><h2>${state}</h2><span class="count">${items.length}</span></header>
+            <div class="cards">${body || "<p class='empty assignee'>No work items</p>"}</div>
+            <p class="invalid-label" hidden>Invalid move</p>
+          </section>`;
+      }).join("");
+    }
+
+    function showBanner(message) {
+      banner.hidden = false;
+      banner.textContent = message;
+    }
+
+    function clearDragMarks() {
+      document.querySelectorAll(".is-dragging, .is-allowed, .is-blocked").forEach((el) => {
+        el.classList.remove("is-dragging", "is-allowed", "is-blocked");
+      });
+    }
+
+    function canMove(card, to) {
+      if (to === card.state) return false;
+      if (card.sync === "error" && to === "Completed") return false;
+      return transitions[card.state].includes(to);
+    }
+
+    board.addEventListener("dragstart", (event) => {
+      const cardEl = event.target.closest(".card");
+      if (!cardEl) return;
+      dragId = cardEl.dataset.id;
+      cardEl.classList.add("is-dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", dragId);
+      const card = cards.find((item) => item.id === dragId);
+      document.querySelectorAll(".column").forEach((column) => {
+        const to = column.dataset.state;
+        if (to === card.state) return;
+        column.classList.add(canMove(card, to) ? "is-allowed" : "is-blocked");
+      });
+    });
+
+    board.addEventListener("dragover", (event) => {
+      if (event.target.closest(".column")) event.preventDefault();
+    });
+
+    board.addEventListener("drop", (event) => {
+      const column = event.target.closest(".column");
+      if (!column || !dragId) return;
+      event.preventDefault();
+      const card = cards.find((item) => item.id === dragId);
+      const to = column.dataset.state;
+      if (to !== card.state && !canMove(card, to)) {
+        column.classList.add("is-invalid");
+        column.querySelector(".invalid-label").hidden = false;
+        const reason = card.sync === "error" && to === "Completed"
+          ? " A card with an Error sync state cannot move to Completed."
+          : " That transition is not allowed.";
+        showBanner(card.id + " cannot move from " + card.state + " to " + to + "." + reason);
+        window.setTimeout(() => {
+          column.classList.remove("is-invalid");
+          const label = column.querySelector(".invalid-label");
+          if (label) label.hidden = true;
+        }, 1800);
+      } else if (to !== card.state) {
+        card.state = to;
+        banner.hidden = true;
+        render();
+      }
+      dragId = null;
+      clearDragMarks();
+    });
+
+    board.addEventListener("dragend", () => {
+      dragId = null;
+      clearDragMarks();
+    });
+
+    render();
+  </script>
+</body>
+</html>
