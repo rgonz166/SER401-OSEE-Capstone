@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ATS list view</title>
+  <link rel="stylesheet" href="list.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <strong>ATS List</strong>
+    </div>
+  </header>
+  <main>
+    <div class="toolbar">
+      <label>Search
+        <input id="search" type="search" placeholder="ID, title, or assignee">
+      </label>
+      <label>State
+        <select id="state">
+          <option value="">All states</option>
+          <option>Open</option>
+          <option>Analyze</option>
+          <option>Implement</option>
+          <option>Review</option>
+          <option>Completed</option>
+          <option>Cancelled</option>
+        </select>
+      </label>
+      <label>GitLab sync
+        <select id="sync">
+          <option value="">All sync states</option>
+          <option value="synced">Synced</option>
+          <option value="pending">Pending</option>
+          <option value="error">Error</option>
+          <option value="unlinked">Not linked</option>
+        </select>
+      </label>
+      <button type="button" id="clear">Clear</button>
+      <p id="count" class="count" aria-live="polite"></p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><button type="button" data-sort="id" data-label="ID">ID</button></th>
+            <th><button type="button" data-sort="title" data-label="Title">Title</button></th>
+            <th><button type="button" data-sort="state" data-label="State">State</button></th>
+            <th><button type="button" data-sort="assignee" data-label="Assignee">Assignee</button></th>
+            <th><button type="button" data-sort="updated" data-label="Updated">Updated</button></th>
+            <th>GitLab</th>
+            <th>Quick actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p id="toast" class="toast" hidden></p>
+    <div id="backdrop" class="backdrop" hidden></div>
+    <aside id="drawer" class="drawer" hidden>
+      <h2 id="drawer-title"></h2>
+      <p id="drawer-body"></p>
+      <button type="button" id="close-drawer">Close</button>
+    </aside>
+  </main>
+  <script>
+    const syncLabel = { synced: "Synced", pending: "Pending", error: "Error", unlinked: "Not linked" };
+    const stateOrder = { Open: 0, Analyze: 1, Implement: 2, Review: 3, Completed: 4, Cancelled: 5 };
+    let rows = [
+      { id: "#18", title: "Create the /ats/gitlab/ endpoint group skeleton", state: "Open", assignee: "Not assigned", updated: "2026-10-02", sync: "unlinked" },
+      { id: "#19", title: "Build the GitLab client (authentication, read/update an issue)", state: "Open", assignee: "Not assigned", updated: "2026-10-03", sync: "pending" },
+      { id: "#27", title: "Write unit tests for the client", state: "Open", assignee: "Not assigned", updated: "2026-10-01", sync: "unlinked" },
+      { id: "#28", title: "Build server-side storage for per-team settings and the token", state: "Open", assignee: "Not assigned", updated: "2026-09-30", sync: "unlinked" },
+      { id: "#9", title: "Kai Pelton - Set up", state: "Analyze", assignee: "Kai Pelton", updated: "2026-10-04", sync: "pending" },
+      { id: "#13", title: "Mockup: Kanban board (columns, cards, drag interaction, invalid-move state)", state: "Implement", assignee: "Not assigned", updated: "2026-10-05", sync: "synced" },
+      { id: "#14", title: "Mockup: Enhanced list view (search, filters, sortable columns, sync badges, quick actions)", state: "Implement", assignee: "Not assigned", updated: "2026-10-06", sync: "synced" },
+      { id: "#17", title: "Review the existing ATS endpoint code to learn the patterns to follow", state: "Review", assignee: "Not assigned", updated: "2026-10-04", sync: "error" },
+      { id: "#7", title: "Mina Gamble - Set up", state: "Completed", assignee: "Mina Gamble", updated: "2026-09-28", sync: "synced" },
+      { id: "#8", title: "Ali Shaban - Set up", state: "Completed", assignee: "Ali Shaban", updated: "2026-09-28", sync: "synced" },
+      { id: "#10", title: "Liezel Vallar - Set up", state: "Completed", assignee: "Liezel Vallar", updated: "2026-09-29", sync: "synced" },
+      { id: "#11", title: "Raul Gonzalez - Set up", state: "Completed", assignee: "Raul Gonzalez", updated: "2026-09-29", sync: "synced" },
+      { id: "#29", title: "Mockup: GitLab config and status panel (setup form, sync state, last sync timestamp)", state: "Completed", assignee: "Not assigned", updated: "2026-10-01", sync: "synced" }
+    ];
+    let sortKey = "updated";
+    let sortDir = "desc";
+    const body = document.getElementById("rows");
+    const search = document.getElementById("search");
+    const stateFilter = document.getElementById("state");
+    const syncFilter = document.getElementById("sync");
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
+    }
+
+    function formatDate(iso) {
+      return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function compare(a, b) {
+      if (sortKey === "id") return Number(a.id.slice(1)) - Number(b.id.slice(1));
+      if (sortKey === "state") return stateOrder[a.state] - stateOrder[b.state];
+      return String(a[sortKey]).localeCompare(String(b[sortKey]), undefined, { sensitivity: "base" });
+    }
+
+    function visibleRows() {
+      const query = search.value.trim().toLowerCase();
+      const state = stateFilter.value;
+      const sync = syncFilter.value;
+      return rows.filter((row) => {
+        const haystack = (row.id + " " + row.title + " " + row.assignee).toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        return matchesQuery && (!state || row.state === state) && (!sync || row.sync === sync);
+      }).sort((a, b) => sortDir === "asc" ? compare(a, b) : compare(b, a));
+    }
+
+    function render() {
+      const items = visibleRows();
+      document.querySelectorAll("[data-sort]").forEach((button) => {
+        const key = button.dataset.sort;
+        const mark = key === sortKey ? (sortDir === "asc" ? " \u2191" : " \u2193") : "";
+        button.textContent = button.dataset.label + mark;
+        button.parentElement.setAttribute("aria-sort", key === sortKey ? (sortDir === "asc" ? "ascending" : "descending") : "none");
+      });
+      document.getElementById("count").textContent = items.length + " of " + rows.length;
+      document.getElementById("clear").disabled = !search.value && !stateFilter.value && !syncFilter.value;
+      body.innerHTML = items.length ? items.map((row) => `
+        <tr>
+          <td class="ats-id">${escapeHtml(row.id)}</td>
+          <td>${escapeHtml(row.title)}</td>
+          <td>${escapeHtml(row.state)}</td>
+          <td>${escapeHtml(row.assignee)}</td>
+          <td>${formatDate(row.updated)}</td>
+          <td><span class="badge badge-${row.sync}">${syncLabel[row.sync]}</span></td>
+          <td class="actions">
+            <button type="button" data-action="open" data-id="${escapeHtml(row.id)}">Open</button>
+            <button type="button" data-action="sync" data-id="${escapeHtml(row.id)}" ${row.sync === "pending" ? "disabled" : ""}>Sync</button>
+            <button type="button" data-action="copy" data-id="${escapeHtml(row.id)}">Copy ID</button>
+          </td>
+        </tr>`).join("") : `<tr class="empty-row"><td colspan="7">No workflows match this search and filter.</td></tr>`;
+    }
+
+    function toast(message) {
+      const node = document.getElementById("toast");
+      node.hidden = false;
+      node.textContent = message;
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => { node.hidden = true; }, 1800);
+    }
+
+    function copyText(value) {
+      const fallback = () => {
+        const input = document.createElement("textarea");
+        input.value = value;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.left = "-9999px";
+        document.body.appendChild(input);
+        input.select();
+        const copied = document.execCommand("copy");
+        input.remove();
+        return copied ? Promise.resolve() : Promise.reject();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(value).catch(fallback);
+      }
+      return fallback();
+    }
+
+    function closeDrawer() {
+      document.getElementById("drawer").hidden = true;
+      document.getElementById("backdrop").hidden = true;
+    }
+
+    document.querySelectorAll("[data-sort]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (sortKey === button.dataset.sort) sortDir = sortDir === "asc" ? "desc" : "asc";
+        else { sortKey = button.dataset.sort; sortDir = "asc"; }
+        render();
+      });
+    });
+    search.addEventListener("input", render);
+    stateFilter.addEventListener("change", render);
+    syncFilter.addEventListener("change", render);
+    document.getElementById("clear").addEventListener("click", () => {
+      search.value = "";
+      stateFilter.value = "";
+      syncFilter.value = "";
+      render();
+    });
+    body.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const row = rows.find((item) => item.id === button.dataset.id);
+      if (!row) return;
+      if (button.dataset.action === "open") {
+        document.getElementById("drawer-title").textContent = row.id + " " + row.title;
+        document.getElementById("drawer-body").textContent = row.state + " \u00b7 " + row.assignee + " \u00b7 Updated " + formatDate(row.updated) + " \u00b7 GitLab " + syncLabel[row.sync];
+        document.getElementById("drawer").hidden = false;
+        document.getElementById("backdrop").hidden = false;
+      } else if (button.dataset.action === "sync") {
+        if (row.sync === "pending") return;
+        row.sync = "pending";
+        render();
+        window.setTimeout(() => {
+          row.sync = "synced";
+          row.updated = "2026-10-06";
+          render();
+          toast(row.id + " synced with GitLab.");
+        }, 500);
+      } else if (button.dataset.action === "copy") {
+        copyText(row.id).then(
+          () => toast("Copied " + row.id),
+          () => toast("Could not copy " + row.id)
+        );
+      }
+    });
+    document.getElementById("close-drawer").addEventListener("click", closeDrawer);
+    document.getElementById("backdrop").addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeDrawer();
+    });
+    render();
+  </script>
+</body>
+</html>
