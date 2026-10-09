@@ -37,6 +37,17 @@
           <option value="unlinked">Not linked</option>
         </select>
       </label>
+      <div class="team-filter">
+        <span id="team-label">Team</span>
+        <button type="button" id="team-button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="team-label">All people</button>
+        <div id="team-menu" class="team-menu" role="listbox" aria-multiselectable="true" hidden>
+          <label class="team-option"><input type="checkbox" value="Ali Shaban"> Ali Shaban</label>
+          <label class="team-option"><input type="checkbox" value="Kai Pelton"> Kai Pelton</label>
+          <label class="team-option"><input type="checkbox" value="Liezel Vallar"> Liezel Vallar</label>
+          <label class="team-option"><input type="checkbox" value="Mina Gamble"> Mina Gamble</label>
+          <label class="team-option"><input type="checkbox" value="Raul Gonzalez"> Raul Gonzalez</label>
+        </div>
+      </div>
       <button type="button" id="clear">Clear</button>
       <p id="count" class="count" aria-live="polite"></p>
     </div>
@@ -88,6 +99,8 @@
     const search = document.getElementById("search");
     const stateFilter = document.getElementById("state");
     const syncFilter = document.getElementById("sync");
+    const teamButton = document.getElementById("team-button");
+    const teamMenu = document.getElementById("team-menu");
 
     function escapeHtml(value) {
       return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
@@ -103,14 +116,20 @@
       return String(a[sortKey]).localeCompare(String(b[sortKey]), undefined, { sensitivity: "base" });
     }
 
+    function selectedPeople() {
+      return [...teamMenu.querySelectorAll("input:checked")].map((input) => input.value);
+    }
+
     function visibleRows() {
       const query = search.value.trim().toLowerCase();
       const state = stateFilter.value;
       const sync = syncFilter.value;
+      const people = selectedPeople();
       return rows.filter((row) => {
         const haystack = (row.id + " " + row.title + " " + row.assignee).toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
-        return matchesQuery && (!state || row.state === state) && (!sync || row.sync === sync);
+        const matchesTeam = people.length === 0 || people.includes(row.assignee);
+        return matchesQuery && matchesTeam && (!state || row.state === state) && (!sync || row.sync === sync);
       }).sort((a, b) => sortDir === "asc" ? compare(a, b) : compare(b, a));
     }
 
@@ -122,8 +141,10 @@
         button.textContent = button.dataset.label + mark;
         button.parentElement.setAttribute("aria-sort", key === sortKey ? (sortDir === "asc" ? "ascending" : "descending") : "none");
       });
+      const people = selectedPeople();
+      teamButton.textContent = people.length === 0 ? "All people" : people.join(", ");
       document.getElementById("count").textContent = items.length + " of " + rows.length;
-      document.getElementById("clear").disabled = !search.value && !stateFilter.value && !syncFilter.value;
+      document.getElementById("clear").disabled = !search.value && !stateFilter.value && !syncFilter.value && people.length === 0;
       body.innerHTML = items.length ? items.map((row) => `
         <tr>
           <td class="ats-id">${escapeHtml(row.id)}</td>
@@ -182,10 +203,22 @@
     search.addEventListener("input", render);
     stateFilter.addEventListener("change", render);
     syncFilter.addEventListener("change", render);
+    function setTeamOpen(open) {
+      teamMenu.hidden = !open;
+      teamButton.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    teamButton.addEventListener("click", () => setTeamOpen(teamMenu.hidden));
+    teamMenu.addEventListener("change", render);
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".team-filter")) setTeamOpen(false);
+    });
     document.getElementById("clear").addEventListener("click", () => {
       search.value = "";
       stateFilter.value = "";
       syncFilter.value = "";
+      teamMenu.querySelectorAll("input").forEach((input) => { input.checked = false; });
+      setTeamOpen(false);
       render();
     });
     body.addEventListener("click", (event) => {
@@ -218,7 +251,9 @@
     document.getElementById("close-drawer").addEventListener("click", closeDrawer);
     document.getElementById("backdrop").addEventListener("click", closeDrawer);
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeDrawer();
+      if (event.key !== "Escape") return;
+      if (!teamMenu.hidden) setTeamOpen(false);
+      else closeDrawer();
     });
     render();
   </script>
