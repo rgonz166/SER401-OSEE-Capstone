@@ -62,6 +62,51 @@ input, select {
 
 #search { min-width: 240px; }
 
+.team-filter { position: relative; }
+
+.team-filter > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#team-button {
+  min-width: 180px;
+  max-width: 260px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 3;
+  min-width: 200px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(28, 36, 48, 0.12);
+}
+
+.team-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 8px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.team-option input { min-width: 0; width: auto; }
+
+.team-option:hover { background: var(--blue-soft); }
+
 input:focus, select:focus, button:focus {
   outline: 2px solid var(--blue);
   outline-offset: 1px;
@@ -174,8 +219,8 @@ tr:hover td { background: #f8fafc; }
 
 @media (max-width: 800px) {
   .count { flex-basis: 100%; margin: 0; }
-  #search, select { min-width: 0; width: 100%; }
-  label { width: 100%; }
+  #search, select, #team-button { min-width: 0; width: 100%; max-width: none; }
+  label, .team-filter { width: 100%; }
   table { min-width: 760px; }
   th, .ats-id, .actions { white-space: nowrap; }
 }
