@@ -84,7 +84,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActraPageTitleComponent } from '../actra-page-title/actra-page-title.component';
 import { WorkflowAttachmentsComponent } from '../components/workflow-attachments/workflow-attachments.component';
 import { ChangeReportButtonComponent } from '../../ple/artifact-explorer/lib/components/hierarchy/change-report-button/change-report-button.component';
-import { PersistedStringAttributeInputComponent } from '@osee/attributes/persisted-string-attribute-input';
 /**
  * ATS work items (team workflows, actions, tasks) live on the Common branch.
  * Used for both the workflow-detail branch context and the SSE change filter.
@@ -111,7 +110,6 @@ const ATS_BRANCH_ID = COMMON_BRANCH_ID;
 		ChangeReportButtonComponent,
 		PresenceAvatarsComponent,
 		ConflictResolutionBannerComponent,
-		PersistedStringAttributeInputComponent
 	],
 	templateUrl: './actra-workflow-editor.component.html',
 })
