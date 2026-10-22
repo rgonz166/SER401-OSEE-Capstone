@@ -1,0 +1,28 @@
+<div class="tw-flex tw-items-center tw-gap-2">
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic">
+		<mat-label>Team</mat-label>
+		<mat-select
+			id="team-filter"
+			multiple
+			[value]="selected()"
+			(selectionChange)="setTeam($event)">
+			@for (person of teamMembers; track person) {
+				<mat-option [value]="person">{{ person }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	@if (selected().length > 0) {
+		<button
+			mat-stroked-button
+			type="button"
+			id="clear-team-filter"
+			(click)="clearTeam()">
+			Clear
+		</button>
+	}
+</div>
+@if (selected().length > 0) {
+	<p id="team-filter-summary">Selected: {{ selected().join(', ') }}</p>
+}
