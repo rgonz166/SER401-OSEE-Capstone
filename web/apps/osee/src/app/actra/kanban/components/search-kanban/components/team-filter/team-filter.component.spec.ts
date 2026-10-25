@@ -34,4 +34,32 @@ describe('TeamFilterComponent', () => {
 		expect(team).not.toBeNull();
 		expect(team.hasAttribute('multiple')).toBe(true);
 	});
+
+	it('should show the selected people', () => {
+		component.setTeam({ value: ['Mina Gamble'] } as MatSelectChange);
+		fixture.detectChanges();
+
+		const summary = fixture.nativeElement.querySelector(
+			'#team-filter-summary'
+		);
+		expect(summary.textContent).toContain('Mina Gamble');
+	});
+
+	it('should clear the selected team', () => {
+		component.setTeam(
+			{ value: ['Ali Shaban', 'Kai Pelton'] } as MatSelectChange
+		);
+		fixture.detectChanges();
+
+		fixture.nativeElement.querySelector('#clear-team-filter').click();
+		fixture.detectChanges();
+
+		expect(component.selected()).toEqual([]);
+		expect(
+			fixture.nativeElement.querySelector('#clear-team-filter')
+		).toBeNull();
+		expect(
+			fixture.nativeElement.querySelector('#team-filter-summary')
+		).toBeNull();
+	});
 });
