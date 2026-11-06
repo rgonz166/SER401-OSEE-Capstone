@@ -12,13 +12,8 @@ import { TeamFilterComponent } from './components/team-filter/team-filter.compon
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchKanbanComponent {
-	private readonly teamFilter = viewChild(TeamFilterComponent);
 	private readonly workflowFilter = viewChild(SearchWorkflowComponent);
-	private readonly assigneeFilter = viewChild(AssigneeSearchComponent);
-
-	readonly hasSelection = computed(() =>
-		(this.teamFilter()?.selected().length ?? 0) > 0 ||
-		(this.workflowFilter()?.selectedWorkflowIds().length ?? 0) > 0 ||
-		(this.assigneeFilter()?.selectedAssigneeIds().length ?? 0) > 0
+	readonly selectedWorkflowIds = computed(() =>
+		this.workflowFilter()?.selectedWorkflowIds() ?? []
 	);
 }

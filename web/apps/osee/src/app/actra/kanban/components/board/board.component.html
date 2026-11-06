@@ -1,4 +1,8 @@
-@if (hasSelection()) {
+@if (loading()) {
+	<p role="status" class="tw-p-4 tw-text-sm tw-opacity-50">Loading workflow states...</p>
+} @else if (error()) {
+	<p role="alert" class="tw-p-4 tw-text-sm tw-opacity-50">{{ error() }}</p>
+} @else if (selectedWorkflowIds().length > 0) {
 <section
 	aria-label="Kanban board"
 	class="tw-flex tw-gap-4 tw-overflow-x-auto tw-pb-4">
@@ -30,11 +34,11 @@
 			</div>
 		</section>
 	} @empty {
-		<p class="tw-p-4 tw-text-sm tw-opacity-50">Provide columns to display cards on the board.</p>
+		<p class="tw-p-4 tw-text-sm tw-opacity-50">No states are defined for the selected workflows.</p>
 	}
 </section>
 } @else {
 	<p role="status" class="tw-p-4 tw-text-sm tw-opacity-50">
-		Use a filter to populate the board.
+		Select a workflow to populate the board.
 	</p>
 }
