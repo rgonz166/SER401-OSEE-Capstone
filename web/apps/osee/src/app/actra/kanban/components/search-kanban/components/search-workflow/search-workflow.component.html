@@ -1,42 +1,16 @@
-
-<mat-form-field
-	appearance="outline"
-	subscriptSizing="dynamic">
-	<mat-label>Search by workflow ID</mat-label>
-	<input
-		matInput
-		type="search"
-		placeholder="Enter a workflow ID"
-		[ngModel]="searchId()"
-		(ngModelChange)="searchId.set($event)"
-		(keydown.enter)="search()"
-		aria-label="Workflow ID" />
-	@if (searchId()) {
-		<button
-			matSuffix
-			mat-icon-button
-			aria-label="Clear workflow ID"
-			matTooltip="Clear"
-			(mousedown)="clearSearch($event)">
-			<mat-icon>close</mat-icon>
-		</button>
-	}
+﻿<mat-form-field appearance="outline" subscriptSizing="dynamic">
+	<mat-label>Workflow</mat-label>
+	<mat-select multiple [value]="selectedWorkflowIds()" (selectionChange)="selectedWorkflowIds.set($event.value)">
+		@for (option of options(); track option.id) {
+			<mat-option [value]="option.id">{{ option.name }}</mat-option>
+		} @empty {
+			<mat-option disabled>{{ loading() ? 'Loading options...' : 'No options available' }}</mat-option>
+		}
+	</mat-select>
 </mat-form-field>
-
-
-@if (loading()) {
-	<p
-		role="status"
-		class="tw-p-4 tw-text-sm tw-opacity-50">
-		Searching…
-	</p>
-} @else if (hasResult()) {
-	// TODO 
-	
-} @else if (error()) {
-	<p
-		role="alert"
-		class="tw-p-4 tw-text-sm tw-opacity-50">
-		{{ error() }}
-	</p>
+@if (selectedWorkflowIds().length > 0) {
+	<button mat-stroked-button type="button" (click)="selectedWorkflowIds.set([])">Clear</button>
+}
+@if (error()) {
+	<p role="alert" class="tw-p-4 tw-text-sm tw-opacity-50">{{ error() }}</p>
 }
