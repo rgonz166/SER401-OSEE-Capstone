@@ -26,6 +26,7 @@ export type KanbanColumn = {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BoardComponent {
+	readonly hasSelection = input(false);
 	readonly columns = input<readonly KanbanColumn[]>([
 		{ id: 'to-do', title: 'To Do', cards: [] },
 		{ id: 'in-progress', title: 'In Progress', cards: [] },
