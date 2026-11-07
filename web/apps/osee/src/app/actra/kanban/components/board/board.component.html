@@ -1,5 +1,5 @@
 @if (loading()) {
-	<p role="status" class="tw-p-4 tw-text-sm tw-opacity-50">Loading workflow states...</p>
+	<p role="status" class="tw-p-4 tw-text-sm tw-opacity-50">Loading workflow cards and states...</p>
 } @else if (error()) {
 	<p role="alert" class="tw-p-4 tw-text-sm tw-opacity-50">{{ error() }}</p>
 } @else if (selectedWorkflowIds().length > 0) {
@@ -18,10 +18,11 @@
 					<mat-card appearance="outlined">
 						<mat-card-header>
 							<mat-card-title class="tw-break-words">
-								{{ card.title }}
+								{{ card.atsId }}
 							</mat-card-title>
 						</mat-card-header>
 						<mat-card-content>
+							<p class="tw-break-words">{{ card.title }}</p>
 							@if (card.description) {
 								<p class="tw-whitespace-pre-wrap tw-break-words">{{ card.description }}</p>
 							}
