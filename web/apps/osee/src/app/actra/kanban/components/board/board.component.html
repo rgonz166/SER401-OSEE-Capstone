@@ -9,7 +9,7 @@
 	@for (column of columns(); track column.id) {
 		<section
 			[attr.aria-label]="column.title"
-			class="tw-min-w-72 tw-flex-1 tw-rounded tw-border tw-border-solid tw-border-foreground-divider tw-p-4">
+			class="tw-min-w-72 tw-flex-1 tw-rounded tw-border-[5px] tw-border-solid tw-border-foreground-divider tw-p-4">
 			<h2 class="tw-mb-4 tw-mt-0 tw-text-lg tw-font-semibold">
 				{{ column.title }} ({{ column.cards.length }})
 			</h2>
