@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, viewChild } from '@angular/core';
 import { AssigneeSearchComponent } from './components/assignee-search/assignee-search.component';
 import { SearchWorkflowComponent } from './components/search-workflow/search-workflow.component'
 
@@ -11,4 +11,9 @@ import { TeamFilterComponent } from './components/team-filter/team-filter.compon
 	templateUrl: './search-kanban.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchKanbanComponent {}
+export class SearchKanbanComponent {
+	private readonly workflowFilter = viewChild(SearchWorkflowComponent);
+	readonly selectedWorkflowIds = computed(() =>
+		this.workflowFilter()?.selectedWorkflowIds() ?? []
+	);
+}
