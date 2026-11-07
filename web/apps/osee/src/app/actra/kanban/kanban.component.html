@@ -1,3 +1,22 @@
-<div class="tw-p-4">
+<div class="tw-flex tw-flex-col tw-gap-4 tw-p-4">
 	<osee-search-kanban />
+	<div class="tw-flex tw-gap-3 tw-overflow-x-auto">
+		@for (column of board.columns; track column.id) {
+			<section
+				class="tw-min-w-52 tw-rounded tw-border tw-border-solid tw-p-3"
+				[id]="'column-' + column.id">
+				<h2 class="tw-m-0 tw-text-base tw-font-semibold">
+					{{ column.title }}
+				</h2>
+				@for (card of column.cards; track card.id) {
+					<article
+						class="tw-mt-2 tw-rounded tw-border tw-border-solid tw-p-2">
+						<p class="tw-m-0">{{ card.title }}</p>
+						<p class="tw-m-0 tw-text-sm">{{ card.assignees[0] }}</p>
+						<p class="tw-m-0 tw-text-sm">{{ card.syncStatus }}</p>
+					</article>
+				}
+			</section>
+		}
+	</div>
 </div>
