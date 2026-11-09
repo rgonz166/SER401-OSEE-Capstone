@@ -1,91 +1,39 @@
-
-import {
-	ChangeDetectionStrategy,
-	Component,
-	computed,
-	inject,
-	signal,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, inject, model } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatOption } from '@angular/material/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatTooltip } from '@angular/material/tooltip';
+import { MatSelect } from '@angular/material/select';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of, Subject, switchMap } from 'rxjs';
-import { ActionService } from '@osee/configuration-management/services';
-import { UiService } from '@osee/shared/services';
-import type { teamWorkflowDetails } from '@osee/shared/types/configuration-management';
+import { catchError, map, of } from 'rxjs';
+import { ActraWorldHttpService } from '../../../../../services/actra-world-http.service';
 
-type SearchResult = {
-	workflow: teamWorkflowDetails | null;
-	loading: boolean;
-	error: string;
-};
+type FilterOption = { id: string; name: string };
 
 @Component({
 	selector: 'osee-search-workflow',
-	imports: [
-		FormsModule,
-		MatFormField,
-		MatLabel,
-		MatInput,
-		MatIconButton,
-		MatIcon,
-		MatTooltip,
-	],
+	imports: [MatFormField, MatLabel, MatSelect, MatOption, MatButton],
 	templateUrl: './search-workflow.component.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchWorkflowComponent {
-	private readonly actionService = inject(ActionService);
-	protected readonly uiService = inject(UiService);
-
-	protected readonly searchId = signal('');
-
-	private readonly _search$ = new Subject<string>();
-
-	private readonly _initialResult: SearchResult = {
-		workflow: null,
-		loading: false,
-		error: '',
-	};
-
-	private readonly _result = toSignal(
-		this._search$.pipe(
-			switchMap((id) =>
-				this.actionService.getTeamWorkflowDetails(id).pipe(
-					switchMap((wf) =>
-						of<SearchResult>({ workflow: wf, loading: false, error: '' })
-					),
-					catchError(() =>
-						of<SearchResult>({
-							workflow: null,
-							loading: false,
-							error: 'Workflow not found.',
-						})
-					)
-				)
-			)
+	private readonly loadedData = toSignal(
+		inject(ActraWorldHttpService).getWorldDataMy().pipe(
+			map((data) => ({
+				options: data.rows.filter((row) => !!row['id']).map((row) => ({ id: row['id'], name: row['Name'] || row['ATS Id'] || row['id'] }))
+					.sort((a, b) => a.name.localeCompare(b.name)),
+				loading: false,
+				error: '',
+			})),
+			catchError(() => of({
+				options: [] as FilterOption[],
+				loading: false,
+				error: 'Unable to load workflow. Reload the page to try again.',
+			}))
 		),
-		{ initialValue: this._initialResult }
+		{ initialValue: { options: [] as FilterOption[], loading: true, error: '' } }
 	);
-
-	protected readonly workflow = computed(() => this._result().workflow);
-	protected readonly loading = computed(() => this._result().loading);
-	protected readonly error = computed(() => this._result().error);
-	protected readonly hasResult = computed(() => this.workflow() !== null);
-
-	protected search(): void {
-		const id = this.searchId().trim();
-		if (!id) return;
-		this._search$.next(id);
-	}
-
-	protected clearSearch(event: MouseEvent): void {
-		event.preventDefault();
-		event.stopPropagation();
-		this.searchId.set('');
-	}
+	protected readonly options = computed(() => this.loadedData().options);
+	protected readonly loading = computed(() => this.loadedData().loading);
+	protected readonly error = computed(() => this.loadedData().error);
+	readonly selectedWorkflowIds = model<string[]>([]);
 }
