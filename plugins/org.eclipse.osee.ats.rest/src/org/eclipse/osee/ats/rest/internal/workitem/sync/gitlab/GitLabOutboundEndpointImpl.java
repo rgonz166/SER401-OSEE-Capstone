@@ -126,4 +126,10 @@ public class GitLabOutboundEndpointImpl implements GitLabOutboundEndpoint {
       // Jira's stored URL has no scheme; accept either form here
       return baseUrl.startsWith("http") ? baseUrl : "https://" + baseUrl;
    }
+
+   @Override
+   public String editGitLabIssue(String jsonPayload, String issueId) {
+      String urlExtension = GITLAB_ISSUES + "/" + issueId;
+      return sendGitLabRequest(jsonPayload, urlExtension, "PUT");
+   }
 }
