@@ -13,13 +13,28 @@
 package org.eclipse.osee.ats.rest.internal.agile.gitlab;
 
 import org.eclipse.osee.ats.api.AtsApi;
+import org.eclipse.osee.ats.api.agile.gitlab.GitLabOutboundEndpoint;
 import org.eclipse.osee.ats.core.agile.gitlab.AbstractAtsGitLabService;
+import org.eclipse.osee.ats.rest.internal.workitem.sync.gitlab.GitLabOutboundEndpointImpl;
 
 public class AtsGitLabServiceImpl extends AbstractAtsGitLabService {
+
+   private static GitLabOutboundEndpoint gitLabEndpoint;
 
    public AtsGitLabServiceImpl(AtsApi atsApi) {
       super(atsApi);
    }
 
-   //TODO
+   private GitLabOutboundEndpoint getGitLabEndpoint() {
+      if (gitLabEndpoint == null) {
+         gitLabEndpoint = new GitLabOutboundEndpointImpl(atsApi);
+      }
+      return gitLabEndpoint;
+   }
+
+   @Override
+   public String createGitLabIssue(String json) {
+      String createResults = getGitLabEndpoint().createGitLabIssue(json);
+      return createResults;
+   }
 }
