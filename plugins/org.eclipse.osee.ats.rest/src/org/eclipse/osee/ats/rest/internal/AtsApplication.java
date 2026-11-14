@@ -56,6 +56,7 @@ import org.eclipse.osee.ats.rest.internal.workitem.AtsTeamWfEndpointImpl;
 import org.eclipse.osee.ats.rest.internal.workitem.AtsWorkTypeEndpointImpl;
 import org.eclipse.osee.ats.rest.internal.workitem.StateResource;
 import org.eclipse.osee.ats.rest.internal.workitem.pr.AtsPrEndpointImpl;
+import org.eclipse.osee.ats.rest.internal.workitem.sync.gitlab.GitLabOutboundEndpointImpl;
 import org.eclipse.osee.ats.rest.internal.workitem.sync.jira.JiraOutboundEndpointImpl;
 import org.eclipse.osee.ats.rest.internal.workitem.workdef.AtsWorkDefEndpointImpl;
 import org.eclipse.osee.ats.rest.internal.world.AtsWorldEndpointImpl;
@@ -150,6 +151,7 @@ public class AtsApplication extends Application {
       singletons.add(new AtsTeamWfEndpointImpl(atsApiServer, orcsApi));
       singletons.add(new AtsAttributeEndpointImpl(atsApiServer, orcsApi));
       singletons.add(new JiraOutboundEndpointImpl(atsApiServer));
+      singletons.add(new GitLabOutboundEndpointImpl(atsApiServer));
       singletons.add(new MetricsEndpointImpl(atsApiServer, orcsApi));
       singletons.add(new AtsReportEndpointImpl(atsApiServer));
       singletons.add(new AtsTestEndpointImpl(atsApiServer, orcsApi));
