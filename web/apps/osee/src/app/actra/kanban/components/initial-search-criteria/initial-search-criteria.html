@@ -1,0 +1,40 @@
+<mat-form-field appearance="outline" subscriptSizing="dynamic">
+	<mat-label>Title</mat-label>
+	<input
+		matInput
+		type="text"
+		[ngModel]="title()"
+		(ngModelChange)="title.set($event)" />
+</mat-form-field>
+
+<mat-form-field appearance="outline" subscriptSizing="dynamic">
+	<mat-label>Team Definitions</mat-label>
+</mat-form-field>
+
+<button
+	mat-stroked-button
+	type="button"
+	(click)="selectedTeams.set([])">
+	Clear
+</button>
+
+<mat-form-field appearance="outline" subscriptSizing="dynamic">
+	<mat-label>State Type</mat-label>
+	<mat-select
+		multiple
+		[value]="selectedStateTypes()"
+		(selectionChange)="selectedStateTypes.set($event.value)">
+		@for (state of stateTypes; track state) {
+			<mat-option [value]="state">{{ state }}</mat-option>
+		}
+	</mat-select>
+</mat-form-field>
+
+@if (selectedStateTypes().length > 0) {
+	<button
+		mat-stroked-button
+		type="button"
+		(click)="selectedStateTypes.set([])">
+		Clear
+	</button>
+}
