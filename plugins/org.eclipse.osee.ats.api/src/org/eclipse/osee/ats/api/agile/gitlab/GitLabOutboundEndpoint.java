@@ -14,9 +14,12 @@ package org.eclipse.osee.ats.api.agile.gitlab;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Encoded;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @Path("gitlab/outbound")
@@ -43,5 +46,14 @@ public interface GitLabOutboundEndpoint {
    @Path("{issueId}/edit")
    @Consumes(MediaType.APPLICATION_JSON)
    public String editGitLabIssue(@Encoded String jsonPayload, @PathParam("issueId") String issueId);
+
+   /**
+    * Gets the opened issues from GitLab. Pass issue_type=task to get only tasks (leave it out for all issues). Format
+    * can be found at https://docs.gitlab.com/api/issues/#list-project-issues
+    */
+   @GET
+   @Path("issues")
+   @Produces(MediaType.APPLICATION_JSON)
+   public String getGitLabIssues(@QueryParam("issue_type") String issueType);
 
 }

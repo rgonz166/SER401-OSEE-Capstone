@@ -50,20 +50,6 @@ public class GitLabOutboundEndpointImpl implements GitLabOutboundEndpoint {
       return sendGitLabRequest(jsonPayload, getIssuesPath(), "POST");
    }
 
-   private String getIssuesPath() {
-      String projectPath = atsApi.getConfigValue(GITLAB_PROJECT_KEY);
-      if (Strings.isInvalid(projectPath)) {
-         throw new OseeCoreException("No GitLab project configured (%s)", GITLAB_PROJECT_KEY);
-      }
-      try {
-         // mina-gamble-group/osee-kanban -> mina-gamble-group%2Fosee-kanban
-         String encodedProject = URLEncoder.encode(projectPath, "UTF-8");
-         return String.format(GITLAB_ISSUES, encodedProject);
-      } catch (Exception ex) {
-         throw new OseeCoreException("Failed to encode GitLab project path", ex);
-      }
-   }
-
    private String sendGitLabRequest(String jsonPayload, String urlExtension, String requestMethod) {
 
       StringBuilder response = new StringBuilder();
@@ -127,9 +113,32 @@ public class GitLabOutboundEndpointImpl implements GitLabOutboundEndpoint {
       return baseUrl.startsWith("http") ? baseUrl : "https://" + baseUrl;
    }
 
+   private String getIssuesPath() {
+      String projectPath = atsApi.getConfigValue(GITLAB_PROJECT_KEY);
+      if (Strings.isInvalid(projectPath)) {
+         throw new OseeCoreException("No GitLab project configured (%s)", GITLAB_PROJECT_KEY);
+      }
+      try {
+         // mina-gamble-group/osee-kanban -> mina-gamble-group%2Fosee-kanban
+         String encodedProject = URLEncoder.encode(projectPath, "UTF-8");
+         return String.format(GITLAB_ISSUES, encodedProject);
+      } catch (Exception ex) {
+         throw new OseeCoreException("Failed to encode GitLab project path", ex);
+      }
+   }
+
    @Override
    public String editGitLabIssue(String jsonPayload, String issueId) {
       String urlExtension = GITLAB_ISSUES + "/" + issueId;
       return sendGitLabRequest(jsonPayload, urlExtension, "PUT");
+   }
+
+   @Override
+   public String getGitLabIssues(String issueType) {
+      String urlExtension = GITLAB_ISSUES + "?state=opened";
+      if (Strings.isValid(issueType)) {
+         urlExtension += "&issue_type=" + URLEncoder.encode(issueType, StandardCharsets.UTF_8);
+      }
+      return sendGitLabRequest("", urlExtension, "GET");
    }
 }
