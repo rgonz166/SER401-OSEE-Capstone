@@ -21,8 +21,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import org.eclipse.osee.ats.api.AtsApi;
-import org.eclipse.osee.ats.api.agile.gitlab.AtsGitLabService;
 import org.eclipse.osee.ats.api.agile.gitlab.GitLabOutboundEndpoint;
+import org.eclipse.osee.ats.api.data.AtsArtifactToken;
+import org.eclipse.osee.framework.core.data.ArtifactToken;
+import org.eclipse.osee.framework.core.enums.CoreAttributeTypes;
 import org.eclipse.osee.framework.jdk.core.type.OseeCoreException;
 import org.eclipse.osee.framework.jdk.core.util.Lib;
 import org.eclipse.osee.framework.jdk.core.util.Strings;
@@ -32,22 +34,25 @@ import org.eclipse.osee.framework.jdk.core.util.Strings;
  */
 public class GitLabOutboundEndpointImpl implements GitLabOutboundEndpoint {
 
-   // Config settings (the base URL key lives in AtsGitLabService)
-   static final String GITLAB_PROJECT_KEY = "GitLabProject"; // e.g. mina-gamble-group/osee-kanban
-   static final String GITLAB_TOKEN_KEY = "GitLabToken"; // access token with api scope
-
-   // %s is replaced with the URL-encoded project path
-   static final String GITLAB_ISSUES = "/api/v4/projects/%s/issues";
-
+   static final String GITLAB_PROJECT = "mina-gamble-group%2Fosee-kanban";
+   static final String GITLAB_ISSUES = "/api/v4/projects/" + GITLAB_PROJECT + "/issues";
    private final AtsApi atsApi;
 
    public GitLabOutboundEndpointImpl(AtsApi atsApi) {
       this.atsApi = atsApi;
    }
 
-   @Override
-   public String createGitLabIssue(String jsonPayload) {
-      return sendGitLabRequest(jsonPayload, getIssuesPath(), "POST");
+   private String getAccessToken() {
+      ArtifactToken gitlabConfig =
+         atsApi.getQueryService().getArtifact(AtsArtifactToken.AtsGitLabConfig, atsApi.getAtsBranch());
+      return atsApi.getAttributeResolver().getSoleAttributeValue(gitlabConfig, CoreAttributeTypes.GeneralStringData,
+         "");
+   }
+
+   private String getGitLabUrl() {
+      ArtifactToken gitlabConfig =
+         atsApi.getQueryService().getArtifact(AtsArtifactToken.AtsGitLabConfig, atsApi.getAtsBranch());
+      return atsApi.getAttributeResolver().getSoleAttributeValue(gitlabConfig, CoreAttributeTypes.ContentUrl, "");
    }
 
    private String sendGitLabRequest(String jsonPayload, String urlExtension, String requestMethod) {
@@ -96,35 +101,9 @@ public class GitLabOutboundEndpointImpl implements GitLabOutboundEndpoint {
       return response.toString();
    }
 
-   private String getAccessToken() {
-      String token = atsApi.getConfigValue(GITLAB_TOKEN_KEY);
-      if (Strings.isInvalid(token)) {
-         throw new OseeCoreException("No GitLab access token configured (%s)", GITLAB_TOKEN_KEY);
-      }
-      return token;
-   }
-
-   private String getGitLabUrl() {
-      String baseUrl = atsApi.getConfigValue(AtsGitLabService.GITLAB_BASEPATH_KEY);
-      if (Strings.isInvalid(baseUrl)) {
-         throw new OseeCoreException("No GitLab base URL configured (%s)", AtsGitLabService.GITLAB_BASEPATH_KEY);
-      }
-      // Jira's stored URL has no scheme; accept either form here
-      return baseUrl.startsWith("http") ? baseUrl : "https://" + baseUrl;
-   }
-
-   private String getIssuesPath() {
-      String projectPath = atsApi.getConfigValue(GITLAB_PROJECT_KEY);
-      if (Strings.isInvalid(projectPath)) {
-         throw new OseeCoreException("No GitLab project configured (%s)", GITLAB_PROJECT_KEY);
-      }
-      try {
-         // mina-gamble-group/osee-kanban -> mina-gamble-group%2Fosee-kanban
-         String encodedProject = URLEncoder.encode(projectPath, "UTF-8");
-         return String.format(GITLAB_ISSUES, encodedProject);
-      } catch (Exception ex) {
-         throw new OseeCoreException("Failed to encode GitLab project path", ex);
-      }
+   @Override
+   public String createGitLabIssue(String jsonPayload) {
+      return sendGitLabRequest(jsonPayload, GITLAB_ISSUES, "POST");
    }
 
    @Override
