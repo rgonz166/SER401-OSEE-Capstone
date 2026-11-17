@@ -25,8 +25,6 @@ type TeamOption = { id: string; name: string };
 		MatFormField,
 		MatInput,
 		MatLabel,
-		MatOption,
-		MatSelect,
 	],
 	templateUrl: './initial-search-criteria.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
