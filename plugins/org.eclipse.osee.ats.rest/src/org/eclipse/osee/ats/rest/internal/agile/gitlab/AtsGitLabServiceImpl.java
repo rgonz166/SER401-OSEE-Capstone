@@ -37,4 +37,9 @@ public class AtsGitLabServiceImpl extends AbstractAtsGitLabService {
       String createResults = getGitLabEndpoint().createGitLabIssue(json);
       return createResults;
    }
+
+   @Override
+   public String getGitLabIssues(String issueType) {
+      return getGitLabEndpoint().getGitLabIssues(issueType);
+   }
 }

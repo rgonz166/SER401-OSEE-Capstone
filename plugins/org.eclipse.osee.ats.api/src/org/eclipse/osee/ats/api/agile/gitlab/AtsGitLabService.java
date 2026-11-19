@@ -25,4 +25,7 @@ public interface AtsGitLabService {
    String createGitLabIssue(String json);
 
    String getCreateIssueJson(IAtsWorkItem workItem);
+
+   /** Gets the opened GitLab issues. issueType is optional (for example "task"). Returns the JSON response. */
+   String getGitLabIssues(String issueType);
 }
