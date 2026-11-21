@@ -73,10 +73,12 @@ public class GitLabOutboundEndpointImpl implements GitLabOutboundEndpoint {
          conn.setRequestProperty("Connection", "keep-alive");
 
          conn.setRequestProperty("Content-Type", "application/json");
-         conn.setDoOutput(true);
-         try (OutputStream os = conn.getOutputStream()) {
-            byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
+         if (Strings.isValid(jsonPayload)) {
+            conn.setDoOutput(true);
+            try (OutputStream os = conn.getOutputStream()) {
+               byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
+               os.write(input, 0, input.length);
+            }
          }
          conn.getResponseCode(); // Populates the error stream
          if (conn.getErrorStream() != null) {
