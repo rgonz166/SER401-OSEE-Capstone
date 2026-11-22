@@ -1,0 +1,184 @@
+<div class="tw-flex tw-flex-col tw-gap-4 tw-p-4 tw-pt-6">
+	<!-- Title -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>Title</mat-label>
+		<input
+			matInput
+			type="text"
+			[ngModel]="title()"
+			(ngModelChange)="title.set($event)"
+			placeholder="Filter by title" />
+	</mat-form-field>
+
+	<!-- Work Item Types -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>Work Item Type</mat-label>
+		<mat-select
+			multiple
+			[value]="selectedWorkItemTypes()"
+			(selectionChange)="selectedWorkItemTypes.set($event.value)">
+			@for (type of workItemTypes; track type) {
+				<mat-option [value]="type">{{ type }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	@if (selectedWorkItemTypes().length > 0) {
+		<button
+			mat-stroked-button
+			type="button"
+			(click)="selectedWorkItemTypes.set([])">
+			Clear Work Item Types
+		</button>
+	}
+
+	<!-- State Type -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>State Type</mat-label>
+		<mat-select
+			multiple
+			[value]="selectedStateTypes()"
+			(selectionChange)="selectedStateTypes.set($event.value)">
+			@for (type of stateTypes; track type) {
+				<mat-option [value]="type">{{ type }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	@if (selectedStateTypes().length > 0) {
+		<button
+			mat-stroked-button
+			type="button"
+			(click)="selectedStateTypes.set([])">
+			Clear State Types
+		</button>
+	}
+
+	<!-- State Name (free text, work-def specific) -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>State Name</mat-label>
+		<input
+			matInput
+			type="text"
+			[ngModel]="stateName()"
+			(ngModelChange)="stateName.set($event)"
+			placeholder="e.g. Implement, Review" />
+	</mat-form-field>
+
+	<!-- Hold State -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>Hold State</mat-label>
+		<mat-select
+			[value]="selectedHoldState()"
+			(selectionChange)="selectedHoldState.set($event.value)">
+			<mat-option value="">Any</mat-option>
+			@for (state of holdStates; track state) {
+				<mat-option [value]="state">{{ state }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+
+	<!-- Change Type -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>Change Type</mat-label>
+		<mat-select
+			multiple
+			[value]="selectedChangeTypes()"
+			(selectionChange)="selectedChangeTypes.set($event.value)">
+			@for (type of changeTypes; track type) {
+				<mat-option [value]="type">{{ type }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	@if (selectedChangeTypes().length > 0) {
+		<button
+			mat-stroked-button
+			type="button"
+			(click)="selectedChangeTypes.set([])">
+			Clear Change Types
+		</button>
+	}
+
+	<!-- Priority -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>Priority</mat-label>
+		<mat-select
+			multiple
+			[value]="selectedPriorities()"
+			(selectionChange)="selectedPriorities.set($event.value)">
+			@for (p of priorities; track p.value) {
+				<mat-option [value]="p.value">{{ p.label }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	@if (selectedPriorities().length > 0) {
+		<button
+			mat-stroked-button
+			type="button"
+			(click)="selectedPriorities.set([])">
+			Clear Priorities
+		</button>
+	}
+
+	<!-- User -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>User</mat-label>
+		<mat-select
+			[value]="selectedUserId()"
+			(selectionChange)="selectedUserId.set($event.value)">
+			<mat-option value="">None</mat-option>
+			@for (user of userOptions(); track user.id) {
+				<mat-option [value]="user.id">{{ user.name }}</mat-option>
+			} @empty {
+				<mat-option disabled>{{
+					usersLoading() ? 'Loading users...' : 'No users available'
+				}}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	@if (usersError()) {
+		<p
+			role="alert"
+			class="tw-p-4 tw-text-sm tw-opacity-50">
+			{{ usersError() }}
+		</p>
+	}
+
+	<!-- User Type -->
+	<mat-form-field
+		appearance="outline"
+		subscriptSizing="dynamic"
+		class="tw-w-full">
+		<mat-label>User Type</mat-label>
+		<mat-select
+			[value]="selectedUserType()"
+			(selectionChange)="selectedUserType.set($event.value)">
+			<mat-option value="">Any</mat-option>
+			@for (type of userTypes; track type) {
+				<mat-option [value]="type">{{ type }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+</div>
